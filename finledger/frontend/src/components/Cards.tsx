@@ -5,13 +5,12 @@ import {
   CreditCard, 
   Snowflake, 
   Ban, 
-  MoreVertical,
   X,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
 import { api } from '../api/client';
-import type { Card, CreateCardRequest } from '../types';
+import type { Card } from '../types';
 
 function formatCurrency(value: string | number): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;

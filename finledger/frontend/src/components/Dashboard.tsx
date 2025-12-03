@@ -11,7 +11,7 @@ import {
   DollarSign,
   Activity
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { api } from '../api/client';
 import type { Card, Transaction } from '../types';
 import { format } from 'date-fns';
@@ -71,7 +71,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function Dashboard() {
-  const [cards, setCards] = useState<Card[]>([]);
+  const [, setCards] = useState<Card[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

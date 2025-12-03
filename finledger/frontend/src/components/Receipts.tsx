@@ -8,7 +8,6 @@ import {
   AlertCircle,
   X,
   Loader2,
-  Receipt as ReceiptIcon,
   Scan
 } from 'lucide-react';
 import { api } from '../api/client';

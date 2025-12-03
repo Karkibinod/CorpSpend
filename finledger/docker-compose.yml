@@ -90,7 +90,7 @@ services:
       REDIS_PORT: 6379
       UPLOAD_FOLDER: /tmp/finledger/receipts
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - receipt_uploads:/tmp/finledger/receipts
     depends_on:

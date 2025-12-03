@@ -2,29 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
+/* CSS Custom Properties for theming */
+:root {
+  --accent-primary: 34, 197, 94;
+  --accent-hover: 22, 163, 74;
+  --accent-glow: 34, 197, 94;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
   background: #1e293b;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
 
-/* Base styles */
-body {
+/* Custom scrollbar - Light mode */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Base styles - Dark mode (default) */
+.dark body {
   @apply bg-obsidian-950 text-obsidian-100 font-sans antialiased;
+}
+
+/* Base styles - Light mode */
+.light body {
+  @apply bg-gray-50 text-gray-900 font-sans antialiased;
+}
+
+/* No animations mode */
+.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Compact mode */
+.compact .stat-card {
+  @apply p-4;
+}
+
+.compact .card-glass {
+  @apply p-4;
+}
+
+.compact .table-cell {
+  @apply px-4 py-2;
+}
+
+.compact .sidebar-link {
+  @apply px-3 py-2;
 }
 
 /* Custom utility classes */

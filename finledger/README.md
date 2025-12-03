@@ -1,4 +1,4 @@
-# FinLedger - Corporate Spend Management Platform
+# CorpSpend - The Autonomous Finance Platform
 
 A robust, production-ready corporate spend management system built with Python, Flask, PostgreSQL, Celery, and a modern React frontend. Designed for high-frequency financial transactions with strict ACID compliance and concurrency control.
 
@@ -6,7 +6,7 @@ A robust, production-ready corporate spend management system built with Python, 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         FINLEDGER                                │
+│                         CORPSPEND                                │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────┐                                               │
@@ -42,6 +42,8 @@ A robust, production-ready corporate spend management system built with Python, 
 - **Card Management**: Issue and manage corporate cards with visual balance tracking
 - **Transaction Processing**: Create transactions with fraud detection feedback
 - **Receipt Upload**: Drag-and-drop OCR processing with auto-matching
+- **Settings**: Configure fraud rules, notifications, card policies, and appearance
+- **Help Center**: FAQs, documentation, and support contacts
 
 **Tech Stack**: React 18, TypeScript, Tailwind CSS, Framer Motion, Recharts, Vite
 

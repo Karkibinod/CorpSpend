@@ -4,6 +4,8 @@ import Dashboard from './components/Dashboard';
 import Cards from './components/Cards';
 import Transactions from './components/Transactions';
 import Receipts from './components/Receipts';
+import Settings from './components/Settings';
+import Help from './components/Help';
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
         <Route path="cards" element={<Cards />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="receipts" element={<Receipts />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="help" element={<Help />} />
       </Route>
     </Routes>
   );

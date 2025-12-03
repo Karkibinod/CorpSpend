@@ -1,5 +1,5 @@
 """
-FinLedger - Corporate Spend Management Platform
+CorpSpend - The Autonomous Finance Platform
 Application Factory Module
 
 This module implements the Flask Application Factory pattern, which provides:
@@ -45,7 +45,7 @@ def create_app(config_name: str = None) -> Flask:
     # Health check endpoint
     @app.route('/health')
     def health_check():
-        return {'status': 'healthy', 'service': 'finledger-api'}, 200
+        return {'status': 'healthy', 'service': 'corpspend-api'}, 200
     
     # Create database tables (for development convenience)
     with app.app_context():

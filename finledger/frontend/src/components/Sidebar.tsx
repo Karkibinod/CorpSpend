@@ -33,9 +33,9 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-xl font-display font-bold text-white tracking-tight">
-              FinLedger
+              CorpSpend
             </h1>
-            <p className="text-xs text-obsidian-400">Corporate Spend Platform</p>
+            <p className="text-xs text-obsidian-400">The Autonomous Finance Platform</p>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-obsidian-100 truncate">Finance Lead</p>
-            <p className="text-xs text-obsidian-400 truncate">admin@finledger.io</p>
+            <p className="text-xs text-obsidian-400 truncate">admin@corpspend.io</p>
           </div>
         </div>
       </div>

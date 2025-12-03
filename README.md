@@ -53,7 +53,11 @@ A robust, production-ready corporate spend management system built with Python, 
 
 ```bash
 # Clone and navigate to the project
-cd finledger
+git clone <repo-url>
+cd CorpSpend
+
+# Create .env file from template
+cp env.config .env
 
 # Start all services
 docker-compose up -d
@@ -239,7 +243,16 @@ Real-time fraud protection with configurable rules:
 ## 📁 Project Structure
 
 ```
-finledger/
+CorpSpend/
+├── .env                          # Environment variables (create from env.config)
+├── .gitignore                    # Git ignore rules
+├── .dockerignore                 # Docker ignore rules
+├── Dockerfile                    # Backend Docker build
+├── docker-compose.yml            # Full stack orchestration
+├── env.config                    # Environment template
+├── requirements.txt              # Python dependencies
+├── run.py                        # Flask entry point
+├── README.md                     # This file
 ├── app/                          # Flask Backend
 │   ├── __init__.py               # Flask app factory
 │   ├── config.py                 # Environment configurations
@@ -271,12 +284,8 @@ finledger/
 │   ├── package.json
 │   ├── tailwind.config.js
 │   └── Dockerfile
-├── scripts/
-│   └── init-db.sql               # Database initialization
-├── requirements.txt              # Python dependencies
-├── Dockerfile                    # Backend Docker build
-├── docker-compose.yml            # Full stack orchestration
-└── README.md
+└── scripts/
+    └── init-db.sql               # Database initialization
 ```
 
 ## 🔒 Security Features
@@ -314,21 +323,30 @@ This ensures that concurrent transactions to the same card are serialized proper
 
 ### Local Backend
 ```bash
+cd CorpSpend
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-export FLASK_ENV=development
-export DATABASE_URL=postgresql://finledger:finledger_dev@localhost:5432/finledger_dev
+# Copy environment config
+cp env.config .env
 
+# Edit .env if needed, then run
 python run.py
 ```
 
 ### Local Frontend
 ```bash
-cd frontend
+cd CorpSpend/frontend
 npm install
 npm run dev
+```
+
+### Using Docker (Recommended)
+```bash
+cd CorpSpend
+cp env.config .env
+docker-compose up -d --build
 ```
 
 ## 📄 License

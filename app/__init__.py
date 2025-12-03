@@ -36,11 +36,11 @@ def create_app(config_name: str = None) -> Flask:
     app.config.from_object(f'app.config.{config_name.capitalize()}Config')
     
     # Initialize CORS for cross-origin requests (needed for separate frontend deployment)
-    cors_origins = app.config.get('CORS_ORIGINS', ['*'])
+    # Allow all origins for simplicity - in production, set CORS_ORIGINS env var
     CORS(app, 
-         resources={r"/api/*": {"origins": cors_origins}},
-         supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization"],
+         resources={r"/*": {"origins": "*"}},
+         supports_credentials=False,
+         allow_headers=["Content-Type", "Authorization", "Accept"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     
     # Initialize extensions with app context

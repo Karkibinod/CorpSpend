@@ -29,9 +29,9 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
-      credentials: 'include', // Include cookies for CORS
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...options.headers,
       },
     };

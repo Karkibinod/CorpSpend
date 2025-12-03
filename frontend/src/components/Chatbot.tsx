@@ -10,6 +10,7 @@ import {
   Minimize2,
   Maximize2
 } from 'lucide-react';
+import { api } from '../api/client';
 
 interface Message {
   id: string;
@@ -221,24 +222,15 @@ export default function Chatbot() {
     await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
 
     try {
-      const response = await fetch('/api/v1/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage.content,
-          context: SYSTEM_CONTEXT,
-          history: messages.slice(-6).map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
+      console.log('💬 Sending chat message...');
+      const data = await api.chat(
+        userMessage.content,
+        messages.slice(-6).map((m) => ({
+          sender: m.role,
+          text: m.content,
+        }))
+      );
+      console.log('✅ Chat response:', data);
 
       // Replace typing indicator with actual message
       setMessages((prev) => prev.map(m => 

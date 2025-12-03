@@ -17,6 +17,9 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1`
   : '/api/v1';
 
+// Debug: Log API base URL
+console.log('API_BASE:', API_BASE, 'VITE_API_URL:', import.meta.env.VITE_API_URL);
+
 class ApiClient {
   private async request<T>(
     endpoint: string,
@@ -33,14 +36,32 @@ class ApiClient {
       },
     };
 
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      const error: ApiError = await response.json();
-      throw new Error(error.message || 'API request failed');
-    }
+    try {
+      const response = await fetch(url, config);
+      
+      // Get response text first
+      const text = await response.text();
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        console.error('API Response not JSON:', text);
+        throw new Error(`API error: ${response.status} - ${text || 'Empty response'}`);
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.message || `API error: ${response.status}`);
+      }
 
-    return response.json();
+      return data as T;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to API server. Check VITE_API_URL configuration.');
+      }
+      throw error;
+    }
   }
 
   // Auth endpoints

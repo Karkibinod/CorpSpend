@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { api } from '../api/client';
 
 interface User {
   id: string;
@@ -40,20 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
-      }
-
-      const data = await response.json();
+      console.log('🔐 Attempting login for:', email);
+      const data = await api.login(email, password);
+      console.log('✅ Login successful:', data);
       setUser(data.user);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error('❌ Login failed:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }

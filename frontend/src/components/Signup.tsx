@@ -12,6 +12,7 @@ import {
   User,
   CheckCircle
 } from 'lucide-react';
+import { api } from '../api/client';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -46,23 +47,12 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Signup failed');
-      }
-
+      console.log('📝 Attempting signup for:', formData.email);
+      await api.signup(formData.name, formData.email, formData.password);
+      console.log('✅ Signup successful');
       setSuccess(true);
     } catch (err) {
+      console.error('❌ Signup failed:', err);
       setError(err instanceof Error ? err.message : 'Signup failed');
     } finally {
       setIsLoading(false);

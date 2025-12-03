@@ -391,6 +391,89 @@ docker-compose up -d --build
 
 The `render.yaml` file auto-configures all services. Just connect your repo!
 
+## 🐛 Troubleshooting
+
+### Login Not Working After Signup
+
+**Symptoms:** You can sign up successfully but cannot log in with the same credentials.
+
+**Possible Causes & Solutions:**
+
+1. **Email Case Sensitivity**
+   - Emails are normalized to lowercase on both signup and login
+   - If you signed up as `User@Email.com`, login with `user@email.com`
+
+2. **API URL Mismatch (Production)**
+   - Ensure `VITE_API_URL` is set correctly in your frontend environment
+   - Check browser console for API_BASE URL being used
+   - The frontend should log: `API_BASE: https://your-api.onrender.com/api/v1`
+
+3. **Database Not Persisting**
+   - If using Docker locally, ensure PostgreSQL volume is mounted
+   - Check if database migrations have run: `docker-compose logs api`
+
+4. **Debug Steps:**
+   ```bash
+   # Open browser developer tools (F12) and check Console tab
+   # You should see these logs:
+   # 📝 Attempting signup for: email@example.com
+   # ✅ Signup successful
+   # 🔑 Login attempt for: email@example.com
+   # ✅ Login successful, redirecting...
+   
+   # Check Network tab for actual API requests
+   # Verify the request URL is correct (not 404)
+   ```
+
+5. **Test with Default Credentials**
+   ```
+   Email: admin@corpspend.io
+   Password: admin123
+   ```
+   If this works, the issue is with your signup/account.
+
+### API Connection Issues
+
+**Error: "Cannot connect to API server"**
+
+1. **Local Development:**
+   - Ensure backend is running: `python run.py` or `docker-compose up api`
+   - Check if API is accessible: `curl http://localhost:5001/api/v1/auth/login`
+
+2. **Production:**
+   - Verify `VITE_API_URL` environment variable is set
+   - Check CORS settings if getting blocked
+   - Ensure backend service is running on Render
+
+### Database Issues
+
+**Error: "Invalid email or password" for newly created account**
+
+```bash
+# Check if user was actually created
+docker-compose exec api python -c "
+from app import create_app, db
+from app.models import User
+app = create_app()
+with app.app_context():
+    users = User.query.all()
+    for u in users:
+        print(f'{u.email} - {u.name}')
+"
+```
+
+### Resetting Everything
+
+```bash
+# Stop all containers and remove volumes
+docker-compose down -v
+
+# Rebuild and start fresh
+docker-compose up -d --build
+
+# This creates a fresh database with the default test user
+```
+
 ## 📄 License
 
 MIT License - See LICENSE file for details.

@@ -84,23 +84,50 @@
 
 /* Custom utility classes */
 @layer components {
-  .card-glass {
+  /* Dark mode card styles */
+  .dark .card-glass {
     @apply bg-obsidian-900/80 backdrop-blur-xl border border-obsidian-700/50 rounded-2xl;
   }
 
-  .card-glass-hover {
-    @apply card-glass transition-all duration-300 hover:border-vault-500/30 hover:shadow-lg hover:shadow-vault-500/10;
+  .dark .card-glass-hover {
+    @apply bg-obsidian-900/80 backdrop-blur-xl border border-obsidian-700/50 rounded-2xl 
+           transition-all duration-300 hover:shadow-lg;
+    --tw-shadow-color: rgba(var(--accent-glow), 0.1);
+    border-color: rgba(var(--accent-primary), 0.3);
   }
 
+  /* Light mode card styles */
+  .light .card-glass {
+    @apply bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-sm;
+  }
+
+  .light .card-glass-hover {
+    @apply bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-sm
+           transition-all duration-300 hover:shadow-lg hover:border-gray-300;
+  }
+
+  /* Primary button with dynamic accent */
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-vault-500 to-vault-600 text-white font-semibold rounded-xl
-           transition-all duration-300 hover:from-vault-400 hover:to-vault-500 hover:shadow-lg hover:shadow-vault-500/25
-           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none;
+    @apply px-6 py-3 text-white font-semibold rounded-xl
+           transition-all duration-300 active:scale-[0.98] 
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none;
+    background: linear-gradient(to right, rgb(var(--accent-primary)), rgb(var(--accent-hover)));
   }
 
-  .btn-secondary {
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 10px 25px -5px rgba(var(--accent-glow), 0.25);
+  }
+
+  /* Secondary button */
+  .dark .btn-secondary {
     @apply px-6 py-3 bg-obsidian-800 text-obsidian-100 font-semibold rounded-xl border border-obsidian-600
            transition-all duration-300 hover:bg-obsidian-700 hover:border-obsidian-500
+           active:scale-[0.98];
+  }
+
+  .light .btn-secondary {
+    @apply px-6 py-3 bg-gray-100 text-gray-800 font-semibold rounded-xl border border-gray-300
+           transition-all duration-300 hover:bg-gray-200 hover:border-gray-400
            active:scale-[0.98];
   }
 
@@ -110,15 +137,36 @@
            active:scale-[0.98];
   }
 
-  .input-field {
+  /* Input fields */
+  .dark .input-field {
     @apply w-full px-4 py-3 bg-obsidian-800/50 border border-obsidian-600 rounded-xl
            text-obsidian-100 placeholder-obsidian-400
-           focus:outline-none focus:border-vault-500 focus:ring-2 focus:ring-vault-500/20
-           transition-all duration-200;
+           focus:outline-none focus:ring-2 transition-all duration-200;
+    --tw-ring-color: rgba(var(--accent-primary), 0.2);
   }
 
-  .label {
+  .dark .input-field:focus {
+    border-color: rgb(var(--accent-primary));
+  }
+
+  .light .input-field {
+    @apply w-full px-4 py-3 bg-white border border-gray-300 rounded-xl
+           text-gray-900 placeholder-gray-400
+           focus:outline-none focus:ring-2 transition-all duration-200;
+    --tw-ring-color: rgba(var(--accent-primary), 0.2);
+  }
+
+  .light .input-field:focus {
+    border-color: rgb(var(--accent-primary));
+  }
+
+  /* Labels */
+  .dark .label {
     @apply block text-sm font-medium text-obsidian-300 mb-2;
+  }
+
+  .light .label {
+    @apply block text-sm font-medium text-gray-600 mb-2;
   }
 
   .status-badge {
@@ -126,73 +174,112 @@
   }
 
   .status-approved {
-    @apply status-badge bg-vault-500/20 text-vault-400 border border-vault-500/30;
+    @apply status-badge bg-green-500/20 text-green-600 border border-green-500/30;
   }
 
   .status-pending {
-    @apply status-badge bg-gold-500/20 text-gold-400 border border-gold-500/30;
+    @apply status-badge bg-yellow-500/20 text-yellow-600 border border-yellow-500/30;
   }
 
   .status-declined {
-    @apply status-badge bg-red-500/20 text-red-400 border border-red-500/30;
+    @apply status-badge bg-red-500/20 text-red-600 border border-red-500/30;
   }
 
   .status-flagged {
-    @apply status-badge bg-orange-500/20 text-orange-400 border border-orange-500/30;
+    @apply status-badge bg-orange-500/20 text-orange-600 border border-orange-500/30;
   }
 
   .status-verified {
-    @apply status-badge bg-blue-500/20 text-blue-400 border border-blue-500/30;
+    @apply status-badge bg-blue-500/20 text-blue-600 border border-blue-500/30;
   }
 
   .status-active {
-    @apply status-badge bg-vault-500/20 text-vault-400 border border-vault-500/30;
+    @apply status-badge bg-green-500/20 text-green-600 border border-green-500/30;
   }
 
   .status-frozen {
-    @apply status-badge bg-cyan-500/20 text-cyan-400 border border-cyan-500/30;
+    @apply status-badge bg-cyan-500/20 text-cyan-600 border border-cyan-500/30;
   }
 
   .status-cancelled {
-    @apply status-badge bg-obsidian-500/20 text-obsidian-400 border border-obsidian-500/30;
+    @apply status-badge bg-gray-500/20 text-gray-600 border border-gray-500/30;
   }
 
   .money {
     @apply font-mono tracking-tight;
   }
 
-  .money-positive {
-    @apply money text-vault-400;
+  .dark .money-positive {
+    @apply money;
+    color: rgb(var(--accent-primary));
+  }
+
+  .light .money-positive {
+    @apply money;
+    color: rgb(var(--accent-hover));
   }
 
   .money-negative {
-    @apply money text-red-400;
+    @apply money text-red-500;
   }
 
-  .stat-card {
-    @apply card-glass p-6 relative overflow-hidden;
+  /* Stat card */
+  .dark .stat-card {
+    @apply bg-obsidian-900/80 backdrop-blur-xl border border-obsidian-700/50 rounded-2xl p-6 relative overflow-hidden;
+  }
+
+  .light .stat-card {
+    @apply bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl shadow-sm p-6 relative overflow-hidden;
   }
 
   .stat-card::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-vault-500/5 to-transparent pointer-events-none;
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(to bottom right, rgba(var(--accent-primary), 0.05), transparent);
   }
 
-  .table-header {
+  /* Table styles */
+  .dark .table-header {
     @apply px-6 py-4 text-left text-xs font-semibold text-obsidian-400 uppercase tracking-wider;
   }
 
-  .table-cell {
+  .light .table-header {
+    @apply px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider;
+  }
+
+  .dark .table-cell {
     @apply px-6 py-4 text-sm text-obsidian-200;
   }
 
-  .sidebar-link {
+  .light .table-cell {
+    @apply px-6 py-4 text-sm text-gray-700;
+  }
+
+  /* Sidebar styles */
+  .dark .sidebar-link {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl text-obsidian-300 font-medium
            transition-all duration-200 hover:bg-obsidian-800 hover:text-obsidian-100;
   }
 
-  .sidebar-link-active {
-    @apply sidebar-link bg-vault-500/10 text-vault-400 border-l-2 border-vault-500;
+  .light .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium
+           transition-all duration-200 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .dark .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl font-medium
+           transition-all duration-200 border-l-2;
+    background: rgba(var(--accent-primary), 0.1);
+    color: rgb(var(--accent-primary));
+    border-color: rgb(var(--accent-primary));
+  }
+
+  .light .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl font-medium
+           transition-all duration-200 border-l-2;
+    background: rgba(var(--accent-primary), 0.1);
+    color: rgb(var(--accent-hover));
+    border-color: rgb(var(--accent-primary));
   }
 }
 

@@ -9,6 +9,7 @@ import {
   Settings,
   HelpCircle
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -23,26 +24,38 @@ const secondaryNav = [
 ];
 
 export default function Sidebar() {
+  const { resolvedMode } = useTheme();
+  
   return (
-    <aside className="fixed left-0 top-0 h-screen w-72 bg-obsidian-900/50 backdrop-blur-xl border-r border-obsidian-700/50 flex flex-col z-50">
+    <aside className={`fixed left-0 top-0 h-screen w-72 backdrop-blur-xl border-r flex flex-col z-50 ${
+      resolvedMode === 'dark' 
+        ? 'bg-obsidian-900/50 border-obsidian-700/50' 
+        : 'bg-white/80 border-gray-200'
+    }`}>
       {/* Logo */}
-      <div className="p-6 border-b border-obsidian-700/50">
+      <div className={`p-6 border-b ${resolvedMode === 'dark' ? 'border-obsidian-700/50' : 'border-gray-200'}`}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-vault-500 to-vault-600 flex items-center justify-center shadow-lg shadow-vault-500/25">
+          <div 
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+            style={{ 
+              background: `linear-gradient(to bottom right, rgb(var(--accent-primary)), rgb(var(--accent-hover)))`,
+              boxShadow: `0 10px 25px -5px rgba(var(--accent-glow), 0.25)`
+            }}
+          >
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white tracking-tight">
+            <h1 className={`text-xl font-display font-bold tracking-tight ${resolvedMode === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               CorpSpend
             </h1>
-            <p className="text-xs text-obsidian-400">The Autonomous Finance Platform</p>
+            <p className={`text-xs ${resolvedMode === 'dark' ? 'text-obsidian-400' : 'text-gray-500'}`}>The Autonomous Finance Platform</p>
           </div>
         </div>
       </div>
 
       {/* Main Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        <p className="px-4 py-2 text-xs font-semibold text-obsidian-500 uppercase tracking-wider">
+        <p className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider ${resolvedMode === 'dark' ? 'text-obsidian-500' : 'text-gray-400'}`}>
           Main Menu
         </p>
         {navigation.map((item) => (
@@ -59,21 +72,30 @@ export default function Sidebar() {
         ))}
 
         {/* Fraud Protection Badge */}
-        <div className="mt-6 mx-4 p-4 rounded-xl bg-gradient-to-br from-vault-500/10 to-vault-600/5 border border-vault-500/20">
+        <div 
+          className="mt-6 mx-4 p-4 rounded-xl border"
+          style={{ 
+            background: `linear-gradient(to bottom right, rgba(var(--accent-primary), 0.1), rgba(var(--accent-primary), 0.05))`,
+            borderColor: `rgba(var(--accent-primary), 0.2)`
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-vault-500/20 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-vault-400" />
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `rgba(var(--accent-primary), 0.2)` }}
+            >
+              <Shield className="w-4 h-4" style={{ color: `rgb(var(--accent-primary))` }} />
             </div>
             <div>
-              <p className="text-sm font-medium text-vault-300">Fraud Protection</p>
-              <p className="text-xs text-vault-500">Active & Monitoring</p>
+              <p className="text-sm font-medium" style={{ color: `rgb(var(--accent-primary))` }}>Fraud Protection</p>
+              <p className={`text-xs ${resolvedMode === 'dark' ? 'text-obsidian-400' : 'text-gray-500'}`}>Active & Monitoring</p>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Secondary Navigation */}
-      <div className="p-4 border-t border-obsidian-700/50 space-y-1">
+      <div className={`p-4 border-t space-y-1 ${resolvedMode === 'dark' ? 'border-obsidian-700/50' : 'border-gray-200'}`}>
         {secondaryNav.map((item) => (
           <NavLink
             key={item.name}
@@ -89,14 +111,14 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-obsidian-700/50">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-obsidian-800/50">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-obsidian-900 font-bold">
-            FL
+      <div className={`p-4 border-t ${resolvedMode === 'dark' ? 'border-obsidian-700/50' : 'border-gray-200'}`}>
+        <div className={`flex items-center gap-3 p-3 rounded-xl ${resolvedMode === 'dark' ? 'bg-obsidian-800/50' : 'bg-gray-100'}`}>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold">
+            CS
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-obsidian-100 truncate">Finance Lead</p>
-            <p className="text-xs text-obsidian-400 truncate">admin@corpspend.io</p>
+            <p className={`text-sm font-medium truncate ${resolvedMode === 'dark' ? 'text-obsidian-100' : 'text-gray-900'}`}>Finance Lead</p>
+            <p className={`text-xs truncate ${resolvedMode === 'dark' ? 'text-obsidian-400' : 'text-gray-500'}`}>admin@corpspend.io</p>
           </div>
         </div>
       </div>

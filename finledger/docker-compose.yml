@@ -89,6 +89,13 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       UPLOAD_FOLDER: /tmp/finledger/receipts
+      OLLAMA_URL: http://host.docker.internal:11434
+      # Groq API Key (get free key at https://console.groq.com)
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      # Test credentials (change in production)
+      TEST_USER_EMAIL: admin@corpspend.io
+      TEST_USER_PASSWORD: admin123
+      TEST_USER_NAME: Admin User
     ports:
       - "5001:5000"
     volumes:

@@ -7,9 +7,10 @@ All endpoints use Pydantic for request validation and response serialization.
 
 import os
 from decimal import Decimal
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime
 import logging
+import httpx
 
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
@@ -28,6 +29,31 @@ from app.services.ledger import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Ollama configuration for Llama 3.2
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://host.docker.internal:11434')
+
+# In-memory user storage (in production, use a proper user database)
+# Initialize with test user from environment variables
+_users_db: dict = {}
+
+def get_users_db():
+    """Get users database, initializing with test user if empty."""
+    global _users_db
+    if not _users_db:
+        # Load test user from environment variables
+        test_email = os.getenv('TEST_USER_EMAIL', 'admin@corpspend.io').lower()
+        test_password = os.getenv('TEST_USER_PASSWORD', 'admin123')
+        test_name = os.getenv('TEST_USER_NAME', 'Admin User')
+        
+        _users_db[test_email] = {
+            'id': str(uuid4()),
+            'password': test_password,
+            'name': test_name,
+            'email': test_email,
+            'role': 'admin',
+        }
+    return _users_db
 
 # Create blueprint for API routes
 api_bp = Blueprint('api', __name__)
@@ -512,4 +538,317 @@ def get_receipt_status(task_id: str):
             'status': 'unknown',
             'error': str(e),
         }), 200
+
+
+# =============================================================================
+# Authentication Endpoints
+# =============================================================================
+
+@api_bp.route('/auth/login', methods=['POST'])
+def login():
+    """
+    Authenticate a user and return user data.
+    
+    Request Body:
+        - email: User email
+        - password: User password
+    
+    Returns:
+        200: User data with session info
+        401: Invalid credentials
+    """
+    data = request.get_json()
+    email = data.get('email', '').lower()
+    password = data.get('password', '')
+    
+    users_db = get_users_db()
+    user_data = users_db.get(email)
+    
+    if not user_data or user_data['password'] != password:
+        return jsonify({
+            'error': 'INVALID_CREDENTIALS',
+            'message': 'Invalid email or password',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 401
+    
+    # Return user data (excluding password)
+    return jsonify({
+        'user': {
+            'id': user_data['id'],
+            'email': user_data['email'],
+            'name': user_data['name'],
+            'role': user_data['role'],
+        },
+        'message': 'Login successful',
+    }), 200
+
+
+@api_bp.route('/auth/signup', methods=['POST'])
+def signup():
+    """
+    Register a new user.
+    
+    Request Body:
+        - name: User's full name
+        - email: User email
+        - password: User password
+    
+    Returns:
+        201: User created successfully
+        400: Validation error
+        409: Email already exists
+    """
+    data = request.get_json()
+    name = data.get('name', '').strip()
+    email = data.get('email', '').lower().strip()
+    password = data.get('password', '')
+    
+    # Validation
+    if not name:
+        return jsonify({
+            'error': 'VALIDATION_ERROR',
+            'message': 'Name is required',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 400
+    
+    if not email or '@' not in email:
+        return jsonify({
+            'error': 'VALIDATION_ERROR',
+            'message': 'Valid email is required',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 400
+    
+    if len(password) < 6:
+        return jsonify({
+            'error': 'VALIDATION_ERROR',
+            'message': 'Password must be at least 6 characters',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 400
+    
+    users_db = get_users_db()
+    
+    # Check if email already exists
+    if email in users_db:
+        return jsonify({
+            'error': 'EMAIL_EXISTS',
+            'message': 'An account with this email already exists',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 409
+    
+    # Create new user
+    new_user = {
+        'id': str(uuid4()),
+        'password': password,  # In production, hash this!
+        'name': name,
+        'email': email,
+        'role': 'user',
+    }
+    
+    users_db[email] = new_user
+    logger.info(f'New user registered: {email}')
+    
+    return jsonify({
+        'message': 'Account created successfully',
+        'user': {
+            'id': new_user['id'],
+            'email': new_user['email'],
+            'name': new_user['name'],
+            'role': new_user['role'],
+        },
+    }), 201
+
+
+@api_bp.route('/auth/logout', methods=['POST'])
+def logout():
+    """
+    Log out the current user.
+    """
+    return jsonify({
+        'message': 'Logout successful',
+    }), 200
+
+
+# =============================================================================
+# Chatbot Endpoint (Groq / Ollama / Smart Fallback)
+# =============================================================================
+
+# Groq API configuration
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+
+# Smart fallback responses for common questions - conversational style
+FALLBACK_RESPONSES = {
+    'card': "Great question! 💳 Creating a card is super easy. Just head over to the Cards section in your sidebar, hit that 'Issue New Card' button, and fill in the cardholder's name along with their spending limit. The card goes live instantly!\n\nYou can track each card's balance and spending right from there. Need to set up a card with specific limits? I can walk you through that too!",
+    
+    'transaction': "So you want to know about transactions! 💸 Here's the deal - every transaction you create goes through our fraud detection automatically (pretty cool, right?). Just head to Transactions, create a new one with the card ID, amount, and merchant name.\n\nHeads up though - anything over $5,000 gets blocked automatically, and we also keep an eye out for any sketchy merchants. Want me to explain how the fraud detection works?",
+    
+    'fraud': "Ah, fraud protection - this is where the magic happens! 🛡️ We've got your back with automatic blocking for any transactions over $5,000. We also maintain a blacklist of suspicious merchants that gets checked in real-time.\n\nIf someone tries to make too many transactions too quickly (like more than 10 per minute), we flag that too. You can customize all these rules in Settings under Fraud Protection. Pretty neat, huh?",
+    
+    'receipt': "Receipt upload is honestly one of my favorite features! 📸 Just drag and drop your receipt image onto the Receipts page (we handle JPG, PNG, GIF, and even PDF). Our OCR tech then pulls out the merchant name, amount, and date automatically.\n\nThe best part? If we're 80% confident or more about a match, it links up with your transaction automatically. Lower confidence ones just get flagged for you to review. Easy peasy!",
+    
+    'dashboard': "Your Dashboard is basically your command center! 📊 You'll see your total spending across all cards right at the top, along with how many cards are active. There's a nice weekly trend chart showing your spending patterns.\n\nI personally love the recent transactions list at the bottom - super handy for quick checks. Any transactions that need your attention (like flagged ones) pop right up too!",
+    
+    'help': "Hey, I'm here to help with anything CorpSpend! 🙌 Whether you need to set up cards, understand a transaction status, figure out why something got flagged, or upload receipts - just ask!\n\nI can also help you configure fraud rules or navigate around the platform. What's on your mind?",
+    
+    'default': "Hey! 👋 I'm your CorpSpend assistant. I know this platform inside and out - from issuing cards and processing transactions to setting up fraud rules and handling receipts.\n\nJust tell me what you're trying to do, and I'll point you in the right direction. No question is too simple!"
+}
+
+def get_smart_fallback(message: str) -> str:
+    """Get a smart fallback response based on keywords in the message."""
+    message_lower = message.lower()
+    
+    # Greetings
+    if any(word in message_lower for word in ['hi', 'hello', 'hey', 'good morning', 'good afternoon']):
+        return "Hey there! 👋 Great to hear from you. I'm ready to help with anything CorpSpend related. What can I do for you today?"
+    
+    # Thank you responses
+    if any(word in message_lower for word in ['thank', 'thanks', 'appreciate']):
+        return "You're welcome! 😊 Always happy to help. Let me know if anything else comes up!"
+    
+    # Card related
+    if any(word in message_lower for word in ['card', 'issue', 'create card', 'new card', 'spending limit', 'corporate card']):
+        return FALLBACK_RESPONSES['card']
+    
+    # Transaction related
+    elif any(word in message_lower for word in ['transaction', 'payment', 'charge', 'spend', 'purchase', 'buy']):
+        return FALLBACK_RESPONSES['transaction']
+    
+    # Fraud/Security related
+    elif any(word in message_lower for word in ['fraud', 'security', 'block', 'blacklist', 'detect', 'suspicious', 'flag', 'declined']):
+        return FALLBACK_RESPONSES['fraud']
+    
+    # Receipt/OCR related
+    elif any(word in message_lower for word in ['receipt', 'ocr', 'upload', 'scan', 'image', 'photo', 'picture']):
+        return FALLBACK_RESPONSES['receipt']
+    
+    # Dashboard related
+    elif any(word in message_lower for word in ['dashboard', 'overview', 'stats', 'metrics', 'summary', 'report']):
+        return FALLBACK_RESPONSES['dashboard']
+    
+    # Settings related
+    elif any(word in message_lower for word in ['setting', 'config', 'preference', 'customize']):
+        return "Settings is where you can really make CorpSpend your own! ⚙️ Head over there from the sidebar and you'll find tabs for fraud protection rules, notification preferences, card policies, and even appearance options like dark/light mode.\n\nIs there a specific setting you're looking to change?"
+    
+    # Help/general questions
+    elif any(word in message_lower for word in ['help', 'how', 'what', 'feature', 'can you', 'explain', 'tell me']):
+        return FALLBACK_RESPONSES['help']
+    
+    else:
+        return FALLBACK_RESPONSES['default']
+
+
+def chat_with_groq(messages: list) -> str | None:
+    """Try to get response from Groq API."""
+    if not GROQ_API_KEY:
+        return None
+    
+    try:
+        from groq import Groq
+        client = Groq(api_key=GROQ_API_KEY)
+        
+        chat_completion = client.chat.completions.create(
+            messages=messages,
+            model="llama-3.1-8b-instant",  # Fast and free
+            temperature=0.7,
+            max_tokens=1024,
+        )
+        
+        return chat_completion.choices[0].message.content
+    except Exception as e:
+        logger.warning(f'Groq API error: {e}')
+        return None
+
+
+def chat_with_ollama(messages: list) -> str | None:
+    """Try to get response from Ollama."""
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(
+                f'{OLLAMA_URL}/api/chat',
+                json={
+                    'model': 'llama3.2',
+                    'messages': messages,
+                    'stream': False,
+                },
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result.get('message', {}).get('content', '')
+    except Exception as e:
+        logger.warning(f'Ollama error: {e}')
+    
+    return None
+
+
+@api_bp.route('/chat', methods=['POST'])
+def chat():
+    """
+    Chat with AI assistant. Tries multiple backends:
+    1. Groq API (if GROQ_API_KEY is set)
+    2. Ollama (if running locally)
+    3. Smart fallback responses
+    
+    Request Body:
+        - message: User message
+        - context: System context for the AI
+        - history: Chat history (optional)
+    
+    Returns:
+        200: AI response
+    """
+    data = request.get_json()
+    user_message = data.get('message', '')
+    system_context = data.get('context', '')
+    history = data.get('history', [])
+    
+    if not user_message:
+        return jsonify({
+            'error': 'MISSING_MESSAGE',
+            'message': 'Message is required',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 400
+    
+    # Build messages array
+    messages = []
+    
+    if system_context:
+        messages.append({
+            'role': 'system',
+            'content': system_context,
+        })
+    
+    for msg in history:
+        messages.append({
+            'role': msg.get('role', 'user'),
+            'content': msg.get('content', ''),
+        })
+    
+    messages.append({
+        'role': 'user',
+        'content': user_message,
+    })
+    
+    # Try Groq first (fastest, if API key available)
+    response_text = chat_with_groq(messages)
+    if response_text:
+        return jsonify({
+            'response': response_text,
+            'model': 'groq/llama-3.1-8b',
+        }), 200
+    
+    # Try Ollama next
+    response_text = chat_with_ollama(messages)
+    if response_text:
+        return jsonify({
+            'response': response_text,
+            'model': 'ollama/llama3.2',
+        }), 200
+    
+    # Fall back to smart responses
+    fallback_response = get_smart_fallback(user_message)
+    return jsonify({
+        'response': fallback_response,
+        'model': 'smart-fallback',
+        'note': 'Using built-in responses. For AI-powered chat, set GROQ_API_KEY or run Ollama.',
+    }), 200
 

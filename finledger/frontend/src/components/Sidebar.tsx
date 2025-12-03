@@ -7,9 +7,11 @@ import {
   Shield,
   TrendingUp,
   Settings,
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -25,6 +27,11 @@ const secondaryNav = [
 
 export default function Sidebar() {
   const { resolvedMode } = useTheme();
+  const { user, logout } = useAuth();
+  
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'CS';
   
   return (
     <aside className={`fixed left-0 top-0 h-screen w-72 backdrop-blur-xl border-r flex flex-col z-50 ${
@@ -113,16 +120,30 @@ export default function Sidebar() {
       {/* User Profile */}
       <div className={`p-4 border-t ${resolvedMode === 'dark' ? 'border-obsidian-700/50' : 'border-gray-200'}`}>
         <div className={`flex items-center gap-3 p-3 rounded-xl ${resolvedMode === 'dark' ? 'bg-obsidian-800/50' : 'bg-gray-100'}`}>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold">
-            CS
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-vault-400 to-vault-600 flex items-center justify-center text-white font-bold text-sm">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`text-sm font-medium truncate ${resolvedMode === 'dark' ? 'text-obsidian-100' : 'text-gray-900'}`}>Finance Lead</p>
-            <p className={`text-xs truncate ${resolvedMode === 'dark' ? 'text-obsidian-400' : 'text-gray-500'}`}>admin@corpspend.io</p>
+            <p className={`text-sm font-medium truncate ${resolvedMode === 'dark' ? 'text-obsidian-100' : 'text-gray-900'}`}>
+              {user?.name || 'Finance Lead'}
+            </p>
+            <p className={`text-xs truncate ${resolvedMode === 'dark' ? 'text-obsidian-400' : 'text-gray-500'}`}>
+              {user?.email || 'admin@corpspend.io'}
+            </p>
           </div>
+          <button
+            onClick={logout}
+            className={`p-2 rounded-lg transition-colors ${
+              resolvedMode === 'dark'
+                ? 'hover:bg-obsidian-700 text-obsidian-400 hover:text-red-400'
+                : 'hover:bg-gray-200 text-gray-400 hover:text-red-500'
+            }`}
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>
   );
 }
-

@@ -110,12 +110,12 @@ export default function Settings() {
             Maximum Transaction Amount
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400 pointer-events-none">$</span>
             <input
               type="number"
               value={fraudSettings.maxTransactionAmount}
               onChange={(e) => setFraudSettings({ ...fraudSettings, maxTransactionAmount: parseInt(e.target.value) })}
-              className="input-field pl-8"
+              className="input-field !pl-10"
             />
           </div>
           <p className="text-xs text-obsidian-500 mt-1">Transactions above this amount will be blocked</p>
@@ -316,12 +316,12 @@ export default function Settings() {
         <div>
           <label className="label">Default Spending Limit</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400 pointer-events-none">$</span>
             <input
               type="number"
               value={cardSettings.defaultSpendingLimit}
               onChange={(e) => setCardSettings({ ...cardSettings, defaultSpendingLimit: parseInt(e.target.value) })}
-              className="input-field pl-8"
+              className="input-field !pl-10"
             />
           </div>
         </div>
@@ -329,12 +329,12 @@ export default function Settings() {
         <div>
           <label className="label">Maximum Spending Limit</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400 pointer-events-none">$</span>
             <input
               type="number"
               value={cardSettings.maxSpendingLimit}
               onChange={(e) => setCardSettings({ ...cardSettings, maxSpendingLimit: parseInt(e.target.value) })}
-              className="input-field pl-8"
+              className="input-field !pl-10"
             />
           </div>
         </div>
@@ -342,12 +342,12 @@ export default function Settings() {
         <div>
           <label className="label">Require Approval Above</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-400 pointer-events-none">$</span>
             <input
               type="number"
               value={cardSettings.requireApprovalAbove}
               onChange={(e) => setCardSettings({ ...cardSettings, requireApprovalAbove: parseInt(e.target.value) })}
-              className="input-field pl-8"
+              className="input-field !pl-10"
             />
           </div>
           <p className="text-xs text-obsidian-500 mt-1">Cards with limits above this require manager approval</p>

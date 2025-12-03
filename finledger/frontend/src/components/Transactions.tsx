@@ -323,24 +323,24 @@ export default function Transactions() {
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-obsidian-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-obsidian-400 pointer-events-none z-10" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search transactions..."
-            className="input-field pl-12"
+            className="w-full px-4 py-3 pl-12 bg-obsidian-800/50 border border-obsidian-600 rounded-xl text-obsidian-100 placeholder-obsidian-400 focus:outline-none focus:ring-2 focus:ring-vault-500/30 focus:border-vault-500 transition-all duration-200"
           />
         </div>
         <div className="relative">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-obsidian-400" />
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-obsidian-400 pointer-events-none z-10" />
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="input-field pl-10 pr-8 appearance-none cursor-pointer min-w-[160px]"
+            className="w-full px-4 py-3 pl-12 pr-10 bg-obsidian-800/50 border border-obsidian-600 rounded-xl text-obsidian-100 focus:outline-none focus:ring-2 focus:ring-vault-500/30 focus:border-vault-500 transition-all duration-200 appearance-none cursor-pointer min-w-[160px]"
           >
             <option value="">All Status</option>
             <option value="approved">Approved</option>

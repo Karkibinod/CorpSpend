@@ -1,6 +1,6 @@
 # FinLedger - Corporate Spend Management Platform
 
-A robust, production-ready corporate spend management system built with Python, Flask, PostgreSQL, and Celery. Designed for high-frequency financial transactions with strict ACID compliance and concurrency control.
+A robust, production-ready corporate spend management system built with Python, Flask, PostgreSQL, Celery, and a modern React frontend. Designed for high-frequency financial transactions with strict ACID compliance and concurrency control.
 
 ## 🏗️ Architecture
 
@@ -9,6 +9,12 @@ A robust, production-ready corporate spend management system built with Python, 
 │                         FINLEDGER                                │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
+│  ┌──────────────┐                                               │
+│  │   Frontend   │   React + TypeScript + Tailwind               │
+│  │   (Nginx)    │   Port 3000                                   │
+│  └──────┬───────┘                                               │
+│         │                                                        │
+│         ▼                                                        │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
 │  │   API        │    │   Worker     │    │   Beat       │       │
 │  │   Service    │    │   Service    │    │   Scheduler  │       │
@@ -29,6 +35,15 @@ A robust, production-ready corporate spend management system built with Python, 
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+## 🎨 Frontend Features
+
+- **Dashboard**: Real-time overview with spending charts and transaction status
+- **Card Management**: Issue and manage corporate cards with visual balance tracking
+- **Transaction Processing**: Create transactions with fraud detection feedback
+- **Receipt Upload**: Drag-and-drop OCR processing with auto-matching
+
+**Tech Stack**: React 18, TypeScript, Tailwind CSS, Framer Motion, Recharts, Vite
 
 ## 🔐 Concurrency Control: Why SELECT FOR UPDATE?
 
@@ -82,18 +97,21 @@ Thread A                          Thread B
 # Clone and navigate to the project
 cd finledger
 
-# Start all services
+# Start all services (API, Worker, Frontend, DB, Redis)
 docker-compose up -d
 
 # Check logs
 docker-compose logs -f api
 
-# Run database migrations (first time only)
-docker-compose exec api flask db upgrade
+# Access the application
+# Frontend: http://localhost:3000
+# API: http://localhost:5000
+# Flower (Celery monitoring): http://localhost:5555
 ```
 
 ### Local Development
 
+**Backend:**
 ```bash
 # Create virtual environment
 python -m venv .venv
@@ -107,14 +125,24 @@ export FLASK_ENV=development
 export DATABASE_URL=postgresql://finledger:finledger_dev@localhost:5432/finledger_dev
 export CELERY_BROKER_URL=redis://localhost:6379/0
 
-# Run migrations
-flask db upgrade
-
 # Start API server
 python run.py
 
 # In another terminal, start Celery worker
 celery -A worker.celery_config:celery_app worker --loglevel=INFO
+```
+
+**Frontend:**
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Access at http://localhost:3000
 ```
 
 ## 📚 API Reference
@@ -316,26 +344,35 @@ asyncio.run(test_concurrent_transactions())
 
 ```
 finledger/
-├── app/
-│   ├── __init__.py          # Flask app factory
-│   ├── config.py             # Environment configurations
-│   ├── models.py             # SQLAlchemy models (Card, Transaction)
-│   ├── schemas.py            # Pydantic validation schemas
-│   ├── routes.py             # API endpoints
+├── app/                          # Flask Backend
+│   ├── __init__.py               # Flask app factory
+│   ├── config.py                 # Environment configurations
+│   ├── models.py                 # SQLAlchemy models (Card, Transaction)
+│   ├── schemas.py                # Pydantic validation schemas
+│   ├── routes.py                 # API endpoints
 │   └── services/
-│       ├── __init__.py
-│       ├── ledger.py         # Transaction logic with row locking
-│       └── fraud.py          # Fraud detection engine
-├── worker/
-│   ├── __init__.py
-│   ├── celery_config.py      # Celery configuration
-│   └── tasks.py              # Async tasks (OCR, reporting)
+│       ├── ledger.py             # Transaction logic with row locking
+│       └── fraud.py              # Fraud detection engine
+├── worker/                       # Celery Workers
+│   ├── celery_config.py          # Celery configuration
+│   └── tasks.py                  # Async tasks (OCR, reporting)
+├── frontend/                     # React Frontend
+│   ├── src/
+│   │   ├── api/client.ts         # API client
+│   │   ├── components/
+│   │   │   ├── Dashboard.tsx     # Overview & charts
+│   │   │   ├── Cards.tsx         # Card management
+│   │   │   ├── Transactions.tsx  # Transaction list & creation
+│   │   │   └── Receipts.tsx      # Receipt upload & OCR
+│   │   └── types/index.ts        # TypeScript definitions
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── Dockerfile
 ├── scripts/
-│   └── init-db.sql           # Database initialization
-├── requirements.txt          # Python dependencies
-├── Dockerfile                # Multi-stage Docker build
-├── docker-compose.yml        # Service orchestration
-├── run.py                    # WSGI entry point
+│   └── init-db.sql               # Database initialization
+├── requirements.txt              # Python dependencies
+├── Dockerfile                    # Backend Docker build
+├── docker-compose.yml            # Full stack orchestration
 └── README.md
 ```
 

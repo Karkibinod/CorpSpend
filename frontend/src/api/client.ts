@@ -11,14 +11,25 @@ import type {
   ApiError,
 } from '../types';
 
-// Use environment variable for API URL (for production deployment)
-// Falls back to relative URL for local development with proxy
-const API_BASE = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api/v1`
-  : '/api/v1';
+// API URL Configuration
+// For production: uses VITE_API_URL env var, falls back to hardcoded Render URL
+const getApiBase = () => {
+  // Check for environment variable first
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL}/api/v1`;
+  }
+  // Production fallback - hardcoded Render URL
+  if (import.meta.env.PROD) {
+    return 'https://corpspend-api.onrender.com/api/v1';
+  }
+  // Development fallback - use proxy
+  return '/api/v1';
+};
+
+const API_BASE = getApiBase();
 
 // Debug: Log API base URL
-console.log('API_BASE:', API_BASE, 'VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('API_BASE:', API_BASE, 'MODE:', import.meta.env.MODE);
 
 class ApiClient {
   private async request<T>(

@@ -36,6 +36,8 @@ services:
         sync: false
       - key: TEST_USER_NAME
         value: Admin User
+      - key: CORS_ORIGINS
+        sync: false  # Set to frontend URL (e.g., https://corpspend-frontend.onrender.com)
 
   # ===========================================================================
   # Frontend Static Site
@@ -57,10 +59,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: corpspend-api
-          property: host
+        sync: false  # Set manually after backend deploys (e.g., https://corpspend-api.onrender.com)
 
 # =============================================================================
 # Database

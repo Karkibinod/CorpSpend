@@ -38,6 +38,11 @@ class ApiClient {
   ): Promise<T> {
     const url = `${API_BASE}${endpoint}`;
     
+    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+    if (options.body) {
+      console.log('📤 Request body:', options.body);
+    }
+    
     const config: RequestInit = {
       ...options,
       headers: {
@@ -50,24 +55,31 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
       
+      console.log(`📥 Response status: ${response.status} ${response.statusText}`);
+      
       // Get response text first
       const text = await response.text();
+      
+      console.log('📥 Response body:', text);
       
       // Try to parse as JSON
       let data;
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
-        console.error('API Response not JSON:', text);
+        console.error('❌ API Response not JSON:', text);
         throw new Error(`API error: ${response.status} - ${text || 'Empty response'}`);
       }
       
       if (!response.ok) {
+        console.error('❌ API Error:', data);
         throw new Error(data.message || `API error: ${response.status}`);
       }
 
+      console.log('✅ API Success:', data);
       return data as T;
     } catch (error) {
+      console.error('❌ API Exception:', error);
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('Cannot connect to API server. Check VITE_API_URL configuration.');
       }
@@ -75,8 +87,15 @@ class ApiClient {
     }
   }
 
+  // Debug endpoint - check users in database
+  async debugUsers(): Promise<{ total_users: number; users: Array<{ id: string; email: string; name: string; role: string }> }> {
+    console.log('🔍 Checking users in database...');
+    return this.request('/auth/debug', { method: 'GET' });
+  }
+
   // Auth endpoints
   async login(email: string, password: string): Promise<{ user: { id: string; name: string; email: string; role: string }; message: string }> {
+    console.log('🔐 Login request for:', email);
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -84,6 +103,7 @@ class ApiClient {
   }
 
   async signup(name: string, email: string, password: string): Promise<{ user: { id: string; name: string; email: string; role: string }; message: string }> {
+    console.log('📝 Signup request for:', email);
     return this.request('/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ name, email, password }),

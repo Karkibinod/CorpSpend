@@ -51,13 +51,23 @@ def create_app(config_name: str = None) -> Flask:
     from app.routes import api_bp
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     
-    # Health check endpoint
+    # Health check endpoint with database status
     @app.route('/health')
     def health_check():
+        from app.models import User
+        try:
+            user_count = User.query.count()
+            db_status = 'connected'
+        except Exception as e:
+            user_count = 0
+            db_status = f'error: {str(e)}'
+        
         return jsonify({
             'status': 'healthy', 
             'service': 'corpspend-api',
-            'environment': config_name
+            'environment': config_name,
+            'database': db_status,
+            'user_count': user_count
         }), 200
     
     # Root endpoint
@@ -70,9 +80,14 @@ def create_app(config_name: str = None) -> Flask:
             'health': '/health'
         }), 200
     
-    # Create database tables
+    # Create database tables and initialize test user
     with app.app_context():
         db.create_all()
+        
+        # Initialize test user at startup
+        from app.routes import init_test_user
+        init_test_user()
+        print("✅ Database initialized and test user created")
     
     return app
 

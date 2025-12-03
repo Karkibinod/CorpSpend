@@ -40,9 +40,16 @@ def init_test_user():
     test_password = os.getenv('TEST_USER_PASSWORD', 'admin123')
     test_name = os.getenv('TEST_USER_NAME', 'Admin User')
     
-    # Check if test user exists
-    existing_user = User.query.filter_by(email=test_email).first()
-    if not existing_user:
+    logger.info(f'🔧 Initializing test user: {test_email}')
+    
+    try:
+        # Check if test user exists
+        existing_user = User.query.filter_by(email=test_email).first()
+        if existing_user:
+            logger.info(f'✅ Test user already exists: {test_email}')
+            return True
+        
+        # Create test user
         user = User(
             email=test_email,
             password_hash=generate_password_hash(test_password),
@@ -50,12 +57,22 @@ def init_test_user():
             role='admin'
         )
         db.session.add(user)
-        try:
-            db.session.commit()
-            logger.info(f'Test user created: {test_email}')
-        except Exception as e:
-            db.session.rollback()
-            logger.warning(f'Could not create test user: {e}')
+        db.session.commit()
+        logger.info(f'✅ Test user created: {test_email}')
+        
+        # Verify user was created
+        verify = User.query.filter_by(email=test_email).first()
+        if verify:
+            logger.info(f'✅ Test user verified in database: {verify.email}')
+            return True
+        else:
+            logger.error(f'❌ Test user NOT found after creation!')
+            return False
+            
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'❌ Could not create test user: {e}')
+        return False
 
 # Create blueprint for API routes
 api_bp = Blueprint('api', __name__)
@@ -566,17 +583,37 @@ def login():
     email = data.get('email', '').lower().strip()
     password = data.get('password', '')
     
+    # Debug logging
+    logger.info(f'🔐 Login attempt for email: {email}')
+    
     # Find user in database
     user = User.query.filter_by(email=email).first()
     
-    if not user or not check_password_hash(user.password_hash, password):
+    # Debug: List all users
+    all_users = User.query.all()
+    logger.info(f'📋 Total users in database: {len(all_users)}')
+    for u in all_users:
+        logger.info(f'   - {u.email} (name: {u.name}, role: {u.role})')
+    
+    if not user:
+        logger.warning(f'❌ User not found: {email}')
         return jsonify({
             'error': 'INVALID_CREDENTIALS',
             'message': 'Invalid email or password',
             'timestamp': datetime.utcnow().isoformat(),
         }), 401
     
-    logger.info(f'User logged in: {email}')
+    logger.info(f'✅ User found: {user.email}')
+    
+    if not check_password_hash(user.password_hash, password):
+        logger.warning(f'❌ Password check failed for: {email}')
+        return jsonify({
+            'error': 'INVALID_CREDENTIALS',
+            'message': 'Invalid email or password',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 401
+    
+    logger.info(f'✅ Login successful: {email}')
     
     # Return user data (excluding password)
     return jsonify({
@@ -610,8 +647,11 @@ def signup():
     email = data.get('email', '').lower().strip()
     password = data.get('password', '')
     
+    logger.info(f'📝 Signup attempt: name={name}, email={email}, password_length={len(password)}')
+    
     # Validation
     if not name:
+        logger.warning('❌ Signup failed: Name is required')
         return jsonify({
             'error': 'VALIDATION_ERROR',
             'message': 'Name is required',
@@ -619,6 +659,7 @@ def signup():
         }), 400
     
     if not email or '@' not in email:
+        logger.warning('❌ Signup failed: Invalid email')
         return jsonify({
             'error': 'VALIDATION_ERROR',
             'message': 'Valid email is required',
@@ -626,6 +667,7 @@ def signup():
         }), 400
     
     if len(password) < 6:
+        logger.warning('❌ Signup failed: Password too short')
         return jsonify({
             'error': 'VALIDATION_ERROR',
             'message': 'Password must be at least 6 characters',
@@ -635,6 +677,7 @@ def signup():
     # Check if email already exists in database
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
+        logger.warning(f'❌ Signup failed: Email already exists: {email}')
         return jsonify({
             'error': 'EMAIL_EXISTS',
             'message': 'An account with this email already exists',
@@ -642,9 +685,12 @@ def signup():
         }), 409
     
     # Create new user in database with hashed password
+    password_hash = generate_password_hash(password)
+    logger.info(f'🔒 Generated password hash (first 20 chars): {password_hash[:20]}...')
+    
     new_user = User(
         email=email,
-        password_hash=generate_password_hash(password),
+        password_hash=password_hash,
         name=name,
         role='user'
     )
@@ -652,7 +698,14 @@ def signup():
     db.session.add(new_user)
     try:
         db.session.commit()
-        logger.info(f'New user registered: {email}')
+        logger.info(f'✅ User created successfully: {email} (ID: {new_user.id})')
+        
+        # Verify user was saved
+        verify_user = User.query.filter_by(email=email).first()
+        if verify_user:
+            logger.info(f'✅ User verified in database: {verify_user.email}')
+        else:
+            logger.error(f'❌ User NOT found after save: {email}')
         
         return jsonify({
             'message': 'Account created successfully',
@@ -665,7 +718,7 @@ def signup():
         }), 201
     except Exception as e:
         db.session.rollback()
-        logger.error(f'Error creating user: {e}')
+        logger.error(f'❌ Error creating user: {e}')
         return jsonify({
             'error': 'SERVER_ERROR',
             'message': 'Failed to create account. Please try again.',
@@ -680,6 +733,29 @@ def logout():
     """
     return jsonify({
         'message': 'Logout successful',
+    }), 200
+
+
+@api_bp.route('/auth/debug', methods=['GET'])
+def debug_users():
+    """
+    Debug endpoint to check users in database.
+    REMOVE IN PRODUCTION!
+    """
+    users = User.query.all()
+    return jsonify({
+        'total_users': len(users),
+        'users': [
+            {
+                'id': str(u.id),
+                'email': u.email,
+                'name': u.name,
+                'role': u.role,
+                'is_active': u.is_active,
+                'created_at': u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in users
+        ]
     }), 200
 
 

@@ -41,6 +41,59 @@ class CardStatus(PyEnum):
     CANCELLED = 'cancelled'
 
 
+class User(db.Model):
+    """
+    User Model for Authentication
+    
+    Stores user credentials and profile information.
+    Passwords are hashed using werkzeug's security functions.
+    """
+    __tablename__ = 'users'
+    
+    id = Column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid.uuid4,
+        comment='Unique identifier for the user'
+    )
+    email = Column(
+        String(255), 
+        unique=True, 
+        nullable=False, 
+        index=True,
+        comment='User email address (used for login)'
+    )
+    password_hash = Column(
+        String(255), 
+        nullable=False,
+        comment='Hashed password'
+    )
+    name = Column(
+        String(255), 
+        nullable=False,
+        comment='User display name'
+    )
+    role = Column(
+        String(50), 
+        nullable=False, 
+        default='user',
+        comment='User role (admin, user)'
+    )
+    is_active = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment='Whether the user account is active'
+    )
+    
+    # Audit timestamps
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<User {self.email}>'
+
+
 class Card(db.Model):
     """
     Corporate Card Model

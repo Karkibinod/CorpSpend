@@ -15,9 +15,10 @@ import httpx
 from flask import Blueprint, request, jsonify, current_app
 from pydantic import ValidationError
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db
-from app.models import Card, Transaction, TransactionStatus
+from app.models import Card, Transaction, TransactionStatus, User
 from app.schemas import (
     CardCreateRequest, CardResponse, CardUpdateRequest,
     TransactionCreateRequest, TransactionResponse, TransactionListResponse,
@@ -33,27 +34,28 @@ logger = logging.getLogger(__name__)
 # Ollama configuration for Llama 3.2
 OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://host.docker.internal:11434')
 
-# In-memory user storage (in production, use a proper user database)
-# Initialize with test user from environment variables
-_users_db: dict = {}
-
-def get_users_db():
-    """Get users database, initializing with test user if empty."""
-    global _users_db
-    if not _users_db:
-        # Load test user from environment variables
-        test_email = os.getenv('TEST_USER_EMAIL', 'admin@corpspend.io').lower()
-        test_password = os.getenv('TEST_USER_PASSWORD', 'admin123')
-        test_name = os.getenv('TEST_USER_NAME', 'Admin User')
-        
-        _users_db[test_email] = {
-            'id': str(uuid4()),
-            'password': test_password,
-            'name': test_name,
-            'email': test_email,
-            'role': 'admin',
-        }
-    return _users_db
+def init_test_user():
+    """Initialize test user in database if it doesn't exist."""
+    test_email = os.getenv('TEST_USER_EMAIL', 'admin@corpspend.io').lower()
+    test_password = os.getenv('TEST_USER_PASSWORD', 'admin123')
+    test_name = os.getenv('TEST_USER_NAME', 'Admin User')
+    
+    # Check if test user exists
+    existing_user = User.query.filter_by(email=test_email).first()
+    if not existing_user:
+        user = User(
+            email=test_email,
+            password_hash=generate_password_hash(test_password),
+            name=test_name,
+            role='admin'
+        )
+        db.session.add(user)
+        try:
+            db.session.commit()
+            logger.info(f'Test user created: {test_email}')
+        except Exception as e:
+            db.session.rollback()
+            logger.warning(f'Could not create test user: {e}')
 
 # Create blueprint for API routes
 api_bp = Blueprint('api', __name__)
@@ -557,27 +559,32 @@ def login():
         200: User data with session info
         401: Invalid credentials
     """
+    # Initialize test user on first request
+    init_test_user()
+    
     data = request.get_json()
-    email = data.get('email', '').lower()
+    email = data.get('email', '').lower().strip()
     password = data.get('password', '')
     
-    users_db = get_users_db()
-    user_data = users_db.get(email)
+    # Find user in database
+    user = User.query.filter_by(email=email).first()
     
-    if not user_data or user_data['password'] != password:
+    if not user or not check_password_hash(user.password_hash, password):
         return jsonify({
             'error': 'INVALID_CREDENTIALS',
             'message': 'Invalid email or password',
             'timestamp': datetime.utcnow().isoformat(),
         }), 401
     
+    logger.info(f'User logged in: {email}')
+    
     # Return user data (excluding password)
     return jsonify({
         'user': {
-            'id': user_data['id'],
-            'email': user_data['email'],
-            'name': user_data['name'],
-            'role': user_data['role'],
+            'id': str(user.id),
+            'email': user.email,
+            'name': user.name,
+            'role': user.role,
         },
         'message': 'Login successful',
     }), 200
@@ -625,37 +632,45 @@ def signup():
             'timestamp': datetime.utcnow().isoformat(),
         }), 400
     
-    users_db = get_users_db()
-    
-    # Check if email already exists
-    if email in users_db:
+    # Check if email already exists in database
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
         return jsonify({
             'error': 'EMAIL_EXISTS',
             'message': 'An account with this email already exists',
             'timestamp': datetime.utcnow().isoformat(),
         }), 409
     
-    # Create new user
-    new_user = {
-        'id': str(uuid4()),
-        'password': password,  # In production, hash this!
-        'name': name,
-        'email': email,
-        'role': 'user',
-    }
+    # Create new user in database with hashed password
+    new_user = User(
+        email=email,
+        password_hash=generate_password_hash(password),
+        name=name,
+        role='user'
+    )
     
-    users_db[email] = new_user
-    logger.info(f'New user registered: {email}')
-    
-    return jsonify({
-        'message': 'Account created successfully',
-        'user': {
-            'id': new_user['id'],
-            'email': new_user['email'],
-            'name': new_user['name'],
-            'role': new_user['role'],
-        },
-    }), 201
+    db.session.add(new_user)
+    try:
+        db.session.commit()
+        logger.info(f'New user registered: {email}')
+        
+        return jsonify({
+            'message': 'Account created successfully',
+            'user': {
+                'id': str(new_user.id),
+                'email': new_user.email,
+                'name': new_user.name,
+                'role': new_user.role,
+            },
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'Error creating user: {e}')
+        return jsonify({
+            'error': 'SERVER_ERROR',
+            'message': 'Failed to create account. Please try again.',
+            'timestamp': datetime.utcnow().isoformat(),
+        }), 500
 
 
 @api_bp.route('/auth/logout', methods=['POST'])

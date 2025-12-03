@@ -69,12 +69,25 @@ class ProductionConfig(BaseConfig):
     """Production environment configuration."""
     
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
+    
+    # Handle Render's postgres:// URL format (SQLAlchemy requires postgresql://)
+    _database_url = os.getenv('DATABASE_URL', '')
+    if _database_url.startswith('postgres://'):
+        _database_url = _database_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = _database_url
     
     # Stricter engine options for production
     SQLALCHEMY_ENGINE_OPTIONS = {
         **BaseConfig.SQLALCHEMY_ENGINE_OPTIONS,
-        'pool_size': 20,
-        'max_overflow': 30,
+        'pool_size': 5,  # Render free tier has connection limits
+        'max_overflow': 10,
     }
+    
+    # CORS settings for production
+    CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')
+    
+    # Session settings
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
 

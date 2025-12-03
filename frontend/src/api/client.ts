@@ -1,4 +1,4 @@
-// FinLedger API Client
+// CorpSpend API Client
 
 import type {
   Card,
@@ -11,7 +11,11 @@ import type {
   ApiError,
 } from '../types';
 
-const API_BASE = '/api/v1';
+// Use environment variable for API URL (for production deployment)
+// Falls back to relative URL for local development with proxy
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1';
 
 class ApiClient {
   private async request<T>(
@@ -22,6 +26,7 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
+      credentials: 'include', // Include cookies for CORS
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -36,6 +41,35 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  // Auth endpoints
+  async login(email: string, password: string): Promise<{ user: { id: string; name: string; email: string; role: string }; message: string }> {
+    return this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async signup(name: string, email: string, password: string): Promise<{ user: { id: string; name: string; email: string; role: string }; message: string }> {
+    return this.request('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
+    });
+  }
+
+  async logout(): Promise<{ message: string }> {
+    return this.request('/auth/logout', {
+      method: 'POST',
+    });
+  }
+
+  // Chat endpoint
+  async chat(message: string, history: Array<{ sender: string; text: string }> = []): Promise<{ response: string; model?: string }> {
+    return this.request('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    });
   }
 
   // Card endpoints

@@ -1,0 +1,35 @@
+# =============================================================================
+# CorpSpend Backend Dependencies
+# =============================================================================
+
+# Web Framework
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# Database
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.13.0
+
+# Validation & Serialization
+pydantic==2.5.2
+pydantic-settings==2.1.0
+
+# Async Task Queue (optional for Render - can use background workers)
+celery[redis]==5.3.4
+redis==4.6.0
+kombu==5.3.4
+
+# Production Server
+gunicorn==21.2.0
+
+# Utilities
+python-dotenv==1.0.0
+
+# AI / LLM
+groq==0.4.2
+httpx==0.25.2
+

@@ -9,9 +9,10 @@ This module implements the Flask Application Factory pattern, which provides:
 """
 
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 # Initialize extensions outside of create_app for import accessibility
 db = SQLAlchemy()
@@ -34,6 +35,14 @@ def create_app(config_name: str = None) -> Flask:
     config_name = config_name or os.getenv('FLASK_ENV', 'development')
     app.config.from_object(f'app.config.{config_name.capitalize()}Config')
     
+    # Initialize CORS for cross-origin requests (needed for separate frontend deployment)
+    cors_origins = app.config.get('CORS_ORIGINS', ['*'])
+    CORS(app, 
+         resources={r"/api/*": {"origins": cors_origins}},
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    
     # Initialize extensions with app context
     db.init_app(app)
     migrate.init_app(app, db)
@@ -45,9 +54,23 @@ def create_app(config_name: str = None) -> Flask:
     # Health check endpoint
     @app.route('/health')
     def health_check():
-        return {'status': 'healthy', 'service': 'corpspend-api'}, 200
+        return jsonify({
+            'status': 'healthy', 
+            'service': 'corpspend-api',
+            'environment': config_name
+        }), 200
     
-    # Create database tables (for development convenience)
+    # Root endpoint
+    @app.route('/')
+    def root():
+        return jsonify({
+            'name': 'CorpSpend API',
+            'version': '1.0.0',
+            'docs': '/api/v1',
+            'health': '/health'
+        }), 200
+    
+    # Create database tables
     with app.app_context():
         db.create_all()
     

@@ -1,0 +1,74 @@
+# =============================================================================
+# Render Blueprint - CorpSpend Deployment Configuration
+# =============================================================================
+# Deploy: Connect this repo to Render and it will auto-detect this file
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ===========================================================================
+  # Backend API Service
+  # ===========================================================================
+  - type: web
+    name: corpspend-api
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: corpspend-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TEST_USER_EMAIL
+        value: admin@corpspend.io
+      - key: TEST_USER_PASSWORD
+        sync: false
+      - key: TEST_USER_NAME
+        value: Admin User
+
+  # ===========================================================================
+  # Frontend Static Site
+  # ===========================================================================
+  - type: web
+    name: corpspend-frontend
+    runtime: static
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: corpspend-api
+          property: host
+
+# =============================================================================
+# Database
+# =============================================================================
+databases:
+  - name: corpspend-db
+    plan: free
+    databaseName: corpspend
+    user: corpspend
+    region: oregon
+

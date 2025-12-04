@@ -53,7 +53,7 @@ A robust, production-ready corporate spend management system built with Python, 
 
 ```bash
 # Clone and navigate to the project
-git clone <repo-url>
+git clone https://github.com/Karkibinod/CorpSpend
 cd CorpSpend
 
 # Create .env file from template

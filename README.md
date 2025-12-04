@@ -5,6 +5,13 @@ A robust, production-ready corporate spend management system built with Python, 
 # Demo Link
 https://corpspend-frontend.onrender.com/
 
+### Test Credentials
+```
+Email: admin@corpspend.io
+Password: admin123
+```
+
+
 ## ✨ Key Features
 
 - 🔐 **User Authentication** - Secure login/signup with session management
@@ -80,12 +87,7 @@ docker-compose logs -f api
 | **API** | http://localhost:5001 | REST API endpoints |
 | **Flower** | http://localhost:5555 | Celery task monitoring |
 
-### Test Credentials
 
-```
-Email: admin@corpspend.io
-Password: admin123
-```
 
 Or create a new account via the signup page!
 

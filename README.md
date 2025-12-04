@@ -349,59 +349,7 @@ cp env.config .env
 docker-compose up -d --build
 ```
 
-## 🚀 Deploy to Render
 
-### One-Click Deploy
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
-### Manual Deployment
-
-1. **Create a Render account** at [render.com](https://render.com)
-
-2. **Deploy Backend (Web Service)**
-   - New → Web Service → Connect your GitHub repo
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn run:app --bind 0.0.0.0:$PORT`
-   - **Environment Variables**:
-     ```
-     FLASK_ENV=production
-     DATABASE_URL=(from Render PostgreSQL)
-     SECRET_KEY=(generate random)
-     GROQ_API_KEY=(optional, for AI chat)
-     TEST_USER_EMAIL=admin@corpspend.io
-     TEST_USER_PASSWORD=your-password
-     ```
-
-3. **Deploy Database (PostgreSQL)**
-   - New → PostgreSQL
-   - Copy the Internal Database URL to your Web Service
-
-4. **Deploy Frontend (Static Site)**
-   - New → Static Site → Connect repo
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `dist`
-   - **Environment Variables**:
-     ```
-     VITE_API_URL=https://your-backend.onrender.com
-     ```
-
-### Using Blueprint (Automatic)
-
-The `render.yaml` file auto-configures all services. Just connect your repo!
-
-## 🐛 Troubleshooting
-
-### Login Not Working After Signup
-
-**Symptoms:** You can sign up successfully but cannot log in with the same credentials.
-
-**Possible Causes & Solutions:**
-
-1. **Email Case Sensitivity**
-   - Emails are normalized to lowercase on both signup and login
-   - If you signed up as `User@Email.com`, login with `user@email.com`
 
 2. **API URL Mismatch (Production)**
    - Ensure `VITE_API_URL` is set correctly in your frontend environment
